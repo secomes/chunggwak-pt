@@ -22,5 +22,5 @@ try{
   const chat=await fetch(app.cfg.publicUrl+'/api/ai/chat',{method:'POST',headers:{cookie,'Content-Type':'application/json','X-CSRF-Token':auth.csrf},body:JSON.stringify({message:'로그인 없이 기존 운영자 계정으로 호출하면 안 됩니다.'})});assert.equal(chat.status,401);
   console.log('설치본 정상: 런타임 실행, 학교 로고, 빈 일정, 개인 ChatGPT 로그인 필수, 운영자 계정 미상속.');
 }finally{
-  await app.close();await fs.rm(dataDir,{recursive:true,force:true});
+  await app.close();await fs.rm(dataDir,{recursive:true,force:true,maxRetries:20,retryDelay:200});
 }
