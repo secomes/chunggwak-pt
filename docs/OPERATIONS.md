@@ -19,4 +19,4 @@ AI는 소스 파일을 바탕으로 변경안을 생성합니다. 보안·설정
 Issues로 요청을 기록하고 브랜치에서 수정한 뒤 자동 테스트를 확인합니다. `node --test`는 계정 분리·일정 규칙·수신 권한·AI 변경안 제한을 검증합니다. 저장소에 `.env`, `data`, `runtime`, `dist`, 로그인 상태, 개인 일정은 올리지 않습니다. 설치 파일은 비공개 릴리스 자산으로 관리합니다.
 
 ## 설치본 빌드
-Node 24와 공식 Codex Windows x64 실행 파일, 필요한 리소스 및 라이선스를 `runtime`에 준비합니다. `scripts/Build-Installer.ps1`을 실행하면 테스트 후 Inno Setup으로 단일 설치 파일을 만듭니다. 컴파일러 경로는 `-Compiler`로 지정할 수 있습니다. 결과와 SHA256은 `dist`에 저장됩니다. 배포 전 빈 폴더 설치와 개인 데이터 미포함을 확인하세요.
+`scripts/Prepare-Runtime.ps1`로 공식 Node 24와 Codex Windows x64 실행 파일을 내려받습니다. 고정된 공식 배포의 SHA256을 확인하고 리소스·라이선스를 `runtime`에 준비합니다. `scripts/Build-Installer.ps1`을 실행하면 테스트 후 Inno Setup으로 단일 설치 파일을 만듭니다. 컴파일러 경로는 `-Compiler`로 지정할 수 있습니다. 결과와 SHA256은 `dist`에 저장됩니다. 배포 전 빈 폴더 설치와 개인 데이터 미포함을 확인하세요.
