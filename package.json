@@ -1,8 +1,8 @@
 {
   "name": "chunggwak-pt",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "충곽피티 — 사용자별 서비스 연결과 백그라운드 일정 관리 API",
+  "description": "충곽 뭐해 — 내 학교 계정으로 과제와 제출 상태를 모으는 일정 관리",
   "type": "module",
   "engines": {
     "node": ">=24.0.0"

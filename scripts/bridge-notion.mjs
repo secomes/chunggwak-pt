@@ -26,5 +26,5 @@ const items = rows.filter(r=>r['과제명']).map(r=>{
 });
 const bridge=JSON.parse(await fs.readFile(path.join(root,'data/desktop-bridge.json'),'utf8'));
 const response=await fetch(bridge.url,{method:'POST',headers:{Authorization:`Bearer ${bridge.token}`,'Content-Type':'application/json'},body:JSON.stringify({items}),signal:AbortSignal.timeout(15000)});
-const result=await response.json();if(!response.ok)throw new Error(result.error||'충곽피티로 전송하지 못했습니다.');
+const result=await response.json();if(!response.ok)throw new Error(result.error||'충곽 뭐해로 전송하지 못했습니다.');
 console.log(JSON.stringify({ok:true,records:items.length,...result}));

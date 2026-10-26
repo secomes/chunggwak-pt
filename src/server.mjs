@@ -95,7 +95,7 @@ export async function createApp(overrides = {}) {
       if (req.headers.host !== expected.host) throw new AppError(403, '허용되지 않은 서버 주소입니다.');
       if (WRITE.has(method) && req.headers.origin && req.headers.origin !== expected.origin) throw new AppError(403, '허용되지 않은 요청 출처입니다.');
       if (route.startsWith('/api/')) apiLimit(req.socket.remoteAddress);
-      if (route === '/api/health' && method === 'GET') return json(res, 200, { service: '충곽피티', version: '1.1.0', ok: true });
+      if (route === '/api/health' && method === 'GET') return json(res, 200, { service: '충곽 뭐해', version: '2.0.0', ok: true });
       if (route === '/api/openapi.json' && method === 'GET') return json(res, 200, openApi(cfg.publicUrl));
       if (route === '/api/auth/register' && method === 'POST') {
         authLimit(req.socket.remoteAddress); if (!cfg.registration) throw new AppError(403, '회원가입이 비활성화되어 있습니다.');
@@ -230,7 +230,7 @@ export async function createApp(overrides = {}) {
         throw new AppError(404, 'API 경로를 찾을 수 없습니다.');
       }
       if (!['GET', 'HEAD'].includes(method)) throw new AppError(405, '지원하지 않는 요청입니다.');
-      const files = { '/school-logo.png': ['school-logo.png', 'image/png'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/icon.svg': ['icon.svg', 'image/svg+xml'] };
+      const files = { '/brand-logo.png': ['brand-logo.png', 'image/png'], '/school-logo.png': ['school-logo.png', 'image/png'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/icon.svg': ['icon.svg', 'image/svg+xml'] };
       const file = files[route]; if (!file) throw new AppError(404, '페이지를 찾을 수 없습니다.');
       res.writeHead(200, { 'Content-Type': `${file[1]}; charset=utf-8` }); res.end(method === 'HEAD' ? '' : fs.readFileSync(path.join(ROOT, 'public', file[0])));
     } catch (e) { if (res.headersSent) return res.end(); const status = e instanceof AppError ? e.status : 500; if (status === 500) console.error('Request failed:', e.name, e.code ?? 'internal'); json(res, status, { error: e instanceof AppError ? e.message : '요청을 처리하지 못했습니다.', code: e instanceof AppError ? e.code : 'internal_error' }); }
@@ -248,10 +248,10 @@ function openApi(base) {
     '/api/ingest/{connectionId}': { post: { summary: '연결별 수신 키로 일정 갱신', parameters: [{ name: 'connectionId', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['items'], properties: { items: { type: 'array', items: { $ref: '#/components/schemas/TaskInput' }, maxItems: 2000 } } } } } } } }
   };
   for (const operations of Object.values(paths)) for (const op of Object.values(operations)) op.responses = { 200: { description: '성공' }, 400: { description: '잘못된 입력' }, 401: { description: '인증 필요' }, 403: { description: '권한 없음' } };
-  return { openapi: '3.1.0', info: { title: '충곽피티 API', version: '1.1.0', description: '모든 데이터는 인증된 사용자 범위로 제한됩니다. 수신 API는 연결별 전용 Bearer 키를 사용합니다.' }, servers: [{ url: base }], security: [{ bearerAuth: [] }], paths, components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } }, schemas: { TaskInput: { type: 'object', required: ['title'], properties: { externalId: { type: 'string', description: '수신 API 필수 원본 ID' }, courseId: { type: 'string' }, title: { type: 'string' }, description: { type: 'string' }, summary: { type: 'string' }, dueAt: { type: ['string', 'null'] }, kind: { type: 'string', enum: ['task', 'material', 'notice'] }, status: { type: 'string', enum: ['assigned', 'submitted', 'unknown'] }, attachments: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, url: { type: 'string' } } } }, url: { type: 'string' } } } } } };
+  return { openapi: '3.1.0', info: { title: '충곽 뭐해 API', version: '2.0.0', description: '모든 데이터는 인증된 사용자 범위로 제한됩니다. 수신 API는 연결별 전용 Bearer 키를 사용합니다.' }, servers: [{ url: base }], security: [{ bearerAuth: [] }], paths, components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } }, schemas: { TaskInput: { type: 'object', required: ['title'], properties: { externalId: { type: 'string', description: '수신 API 필수 원본 ID' }, courseId: { type: 'string' }, title: { type: 'string' }, description: { type: 'string' }, summary: { type: 'string' }, dueAt: { type: ['string', 'null'] }, kind: { type: 'string', enum: ['task', 'material', 'notice'] }, status: { type: 'string', enum: ['assigned', 'submitted', 'unknown'] }, attachments: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, url: { type: 'string' } } } }, url: { type: 'string' } } } } } };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const app = await createApp(); await app.listen(); console.log(`충곽피티: ${app.cfg.publicUrl}`);
+  const app = await createApp(); await app.listen(); console.log(`충곽 뭐해: ${app.cfg.publicUrl}`);
   const stop = async () => { await app.close(); process.exit(0); }; process.once('SIGINT', stop); process.once('SIGTERM', stop);
 }

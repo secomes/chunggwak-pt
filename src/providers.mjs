@@ -121,8 +121,8 @@ async function notionRequest(path, ctx, connection, method = 'GET', data) {
   return publicJson(`https://api.notion.com/v1/${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Notion-Version': ctx.cfg.notionVersion, 'Content-Type': 'application/json' }, body: data ? JSON.stringify(data) : undefined });
 }
 export async function createNotionDatabase(connection, ctx, pageId) {
-  const response = await notionRequest('databases', ctx, connection, 'POST', { parent: { type: 'page_id', page_id: pageId }, title: rich('충곽피티 일정표'), initial_data_source: { properties: {
-    '과제명': { title: {} }, '할 일 요약': { rich_text: {} }, '마감일': { date: {} }, '첨부파일명': { rich_text: {} }, '원문 링크': { url: {} }, '과목': { rich_text: {} }, '출처': { rich_text: {} }, '구분': { select: { options: [{ name: '과제' }, { name: '학습자료' }, { name: '공지' }] } }, '제출 상태': { select: { options: [{ name: '미제출' }, { name: '제출 확인' }, { name: '확인 필요' }] } }, '최근 확인': { date: {} }, '원본 ID': { rich_text: {} }, '충곽피티 ID': { rich_text: {} }
+  const response = await notionRequest('databases', ctx, connection, 'POST', { parent: { type: 'page_id', page_id: pageId }, title: rich('충곽 뭐해 일정표'), initial_data_source: { properties: {
+    '과제명': { title: {} }, '할 일 요약': { rich_text: {} }, '마감일': { date: {} }, '첨부파일명': { rich_text: {} }, '원문 링크': { url: {} }, '과목': { rich_text: {} }, '출처': { rich_text: {} }, '구분': { select: { options: [{ name: '과제' }, { name: '학습자료' }, { name: '공지' }] } }, '제출 상태': { select: { options: [{ name: '미제출' }, { name: '제출 확인' }, { name: '확인 필요' }] } }, '최근 확인': { date: {} }, '원본 ID': { rich_text: {} }, '충곽 뭐해 ID': { rich_text: {} }
   } } });
   const id = response.data_sources?.[0]?.id; if (!id) throw new AppError(502, '새 노션 데이터 소스 ID를 확인하지 못했습니다.');
   ctx.store.run('UPDATE connections SET config=? WHERE id=?', JSON.stringify({ ...JSON.parse(connection.config), dataSourceId: id }), connection.id);
@@ -136,11 +136,11 @@ async function pushNotion(connection, ctx) {
   const pages = []; let cursor;
   for (let n = 0; n < 100; n++) { const r = await notionRequest(`data_sources/${config.dataSourceId}/query`, ctx, connection, 'POST', { page_size: 100, ...(cursor ? { start_cursor: cursor } : {}) }); pages.push(...r.results); if (!r.has_more) break; cursor = r.next_cursor; if (n === 99) throw new AppError(502, '노션 페이지를 전부 읽지 못했습니다.'); }
   const propText = (p, name) => (p.properties?.[name]?.rich_text ?? p.properties?.[name]?.title ?? []).map(x => x.plain_text ?? x.text?.content ?? '').join('');
-  const byId = new Map(pages.filter(p => propText(p, '충곽피티 ID')).map(p => [propText(p, '충곽피티 ID'), p]));
+  const byId = new Map(pages.filter(p => propText(p, '충곽 뭐해 ID')).map(p => [propText(p, '충곽 뭐해 ID'), p]));
   const counts = { created: 0, updated: 0, unchanged: 0 };
   for (const task of ctx.store.listTasks(connection.user_id)) {
     const properties = {};
-    const values = { '과제명': task.title, '할 일 요약': task.summary, '과목': task.course, '출처': task.source === 'classroom' ? 'Google Classroom' : task.source === 'teams' ? 'Teams' : task.source, '구분': task.kind === 'material' ? '학습자료' : task.kind === 'notice' ? '공지' : '과제', '제출 상태': task.status === 'submitted' ? '제출 확인' : task.status === 'assigned' ? '미제출' : '확인 필요', '첨부파일명': task.attachments.map(a => a.name).join('\n'), '원본 ID': task.externalId, '충곽피티 ID': task.id };
+    const values = { '과제명': task.title, '할 일 요약': task.summary, '과목': task.course, '출처': task.source === 'classroom' ? 'Google Classroom' : task.source === 'teams' ? 'Teams' : task.source, '구분': task.kind === 'material' ? '학습자료' : task.kind === 'notice' ? '공지' : '과제', '제출 상태': task.status === 'submitted' ? '제출 확인' : task.status === 'assigned' ? '미제출' : '확인 필요', '첨부파일명': task.attachments.map(a => a.name).join('\n'), '원본 ID': task.externalId, '충곽 뭐해 ID': task.id };
     for (const [key, value] of Object.entries(values)) { const type = schema[key]?.type; if (['title', 'rich_text'].includes(type)) properties[key] = { [type]: rich(value) }; else if (type === 'select') properties[key] = { select: { name: value } }; }
     if (schema['마감일']?.type === 'date') properties['마감일'] = { date: task.dueAt ? { start: task.dueAt } : null };
     if (schema['원문 링크']?.type === 'url') properties['원문 링크'] = { url: task.url || null };

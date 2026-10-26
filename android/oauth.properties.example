@@ -1,0 +1,5 @@
+# Publisher configuration; never ask an end user to enter these values.
+# Android Google OAuth registration uses package kr.cbsh.mohae and signing SHA-1.
+# Microsoft: multi-tenant native public client, PKCE, no client secret.
+# Redirect: kr.cbsh.mohae://oauth/teams
+microsoftClientId=

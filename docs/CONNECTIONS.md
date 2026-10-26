@@ -1,6 +1,8 @@
 # 계정별 공식 연결
 
-충곽피티 로그인은 서비스 계정과 독립적입니다. 사용자는 자기 프로그램 계정에 로그인한 후 자기 구글·학교 Microsoft·Notion 계정을 선택합니다. 전역 앱 Client ID는 공통으로 사용할 수 있지만 사용자 토큰은 별도 연결 레코드로 저장합니다.
+이 문서는 **Windows 배포 담당자용**입니다. Android 사용자는 자신의 학교 계정으로 로그인하면 되며 개발자 설정을 입력하지 않습니다. Android 앱 등록은 [배포 준비](ANDROID-PUBLISHING.md)를 참고하세요.
+
+충곽 뭐해 로그인은 서비스 계정과 독립적입니다. 사용자는 자기 프로그램 계정에 로그인한 후 자기 구글·학교 Microsoft·Notion 계정을 선택합니다. 전역 앱 Client ID는 공통으로 사용할 수 있지만 사용자 토큰은 별도 연결 레코드로 저장합니다.
 
 ## Google Classroom
 
@@ -8,7 +10,7 @@ Google Cloud 프로젝트에서 Classroom API를 사용 설정하고 OAuth 동�
 
 `http://127.0.0.1:4318/api/oauth/classroom/callback`
 
-공개 배포 시 충곽피티의 HTTPS 도메인으로 바꿉니다. 권한은 `openid email`, `classroom.courses.readonly`, `classroom.coursework.me.readonly`, `classroom.courseworkmaterials.readonly`입니다. 테스트 모드에서는 사용할 계정을 테스트 사용자로 추가해야 하며 학교 정책에 따라 허용 또는 앱 검증이 필요할 수 있습니다. 외부 공개 전 Google 검증 요건을 확인하세요.
+공개 배포 시 충곽 뭐해의 HTTPS 도메인으로 바꿉니다. 권한은 `openid email`, `classroom.courses.readonly`, `classroom.coursework.me.readonly`, `classroom.courseworkmaterials.readonly`입니다. 테스트 모드에서는 사용할 계정을 테스트 사용자로 추가해야 하며 학교 정책에 따라 허용 또는 앱 검증이 필요할 수 있습니다. 외부 공개 전 Google 검증 요건을 확인하세요.
 
 ## Microsoft Teams
 
@@ -24,7 +26,7 @@ Entra에 Web application을 등록하고 사용할 조직 범위에 맞게 지�
 
 `http://127.0.0.1:4318/api/oauth/notion/callback`
 
-사용자는 연결 시 허용할 페이지를 직접 선택합니다. 개인 워크스페이스에서는 Internal connection 토큰을 그 사용자의 연결 화면에 넣어도 됩니다. 그 연결에 대상 페이지를 공유해야 합니다. 대상 data source ID를 입력하거나 연결 설정에서 부모 page ID로 새로운 충곽피티 일정표를 만드세요. 기존 일정표를 쓰는 경우 과제명·할 일 요약 속성이 있어야 하며 선택한 data source에서만 저장합니다. 기본 API 버전은 `2025-09-03`입니다.
+사용자는 연결 시 허용할 페이지를 직접 선택합니다. 개인 워크스페이스에서는 Internal connection 토큰을 그 사용자의 연결 화면에 넣어도 됩니다. 그 연결에 대상 페이지를 공유해야 합니다. 대상 data source ID를 입력하거나 연결 설정에서 부모 page ID로 새로운 충곽 뭐해 일정표를 만드세요. 기존 일정표를 쓰는 경우 과제명·할 일 요약 속성이 있어야 하며 선택한 data source에서만 저장합니다. 기본 API 버전은 `2025-09-03`입니다.
 
 ## 현재 브리지
 

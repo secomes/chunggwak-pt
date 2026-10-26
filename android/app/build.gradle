@@ -1,0 +1,36 @@
+plugins { id 'com.android.application' }
+
+def signingFile = rootProject.file('../data/android-signing.properties')
+def signingValues = new Properties()
+if (signingFile.exists()) signingFile.withReader('UTF-8') { signingValues.load(it) }
+def publicConfig = new Properties()
+def publicConfigFile = rootProject.file('oauth.properties')
+if (publicConfigFile.exists()) publicConfigFile.withReader('UTF-8') { publicConfig.load(it) }
+
+android {
+    namespace 'kr.cbsh.mohae'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'kr.cbsh.mohae'
+        minSdk 26
+        targetSdk 35
+        versionCode 20000
+        versionName '2.0.0'
+        buildConfigField 'String', 'MICROSOFT_CLIENT_ID', '"' + publicConfig.getProperty('microsoftClientId', '') + '"'
+    }
+    buildFeatures { buildConfig true }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    testOptions { unitTests.includeAndroidResources = true }
+    signingConfigs {
+        if (signingFile.exists()) {
+            release { storeFile file(signingValues['storeFile']); storePassword signingValues['storePassword']; keyAlias signingValues['keyAlias']; keyPassword signingValues['keyPassword'] }
+        }
+    }
+    buildTypes { release { minifyEnabled false; if (signingFile.exists()) signingConfig signingConfigs.release } }
+}
+dependencies {
+    implementation 'com.google.android.gms:play-services-auth:22.0.0'
+    implementation 'androidx.work:work-runtime:2.10.1'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
+}
