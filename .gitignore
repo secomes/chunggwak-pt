@@ -1,0 +1,9 @@
+data/*
+!data/.gitkeep
+.env
+*.log
+node_modules/
+runtime/
+dist/
+*.zip
+*.exe
