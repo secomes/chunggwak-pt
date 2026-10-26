@@ -46,5 +46,5 @@ Name: "{userstartup}\충곽피티 백그라운드"; Filename: "{sys}\WindowsPowe
 [Run]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\scripts\Start.ps1"""; Description: "충곽피티 실행"; Flags: nowait postinstall skipifsilent runhidden
 [UninstallRun]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\scripts\Stop.ps1"""; Flags: runhidden waituntilterminated
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\scripts\Stop.ps1"""; Flags: runhidden waituntilterminated; RunOnceId: "StopChunggwak"
 ; User data is deliberately preserved; it is never shipped in the installer.
