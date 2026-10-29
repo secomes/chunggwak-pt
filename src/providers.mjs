@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { AppError, cleanHtml, getPath, mapFeed, text } from './core.mjs';
 import { publicJson } from './network.mjs';
+import { GOOGLE_DESKTOP_CLIENT_ID, MICROSOFT_PUBLIC_CLIENT_ID } from './provider-apps.mjs';
 
 export const CATALOG = [
   { id: 'classroom', name: 'Google Classroom', icon: 'G', color: 'green', category: 'source', description: '수업별 과제·제출 상태·학습자료를 읽어 옵니다.', auth: 'oauth', fields: [], detail: '각자 구글 계정으로 연결합니다. 마감일 없는 항목은 학습자료로 분류합니다.' },
@@ -13,19 +14,19 @@ export const CATALOG = [
 
 export function oauthDefinition(provider, cfg) {
   const redirect = `${cfg.publicUrl}/api/oauth/${provider}/callback`;
-  if (provider === 'classroom') return { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, auth: 'https://accounts.google.com/o/oauth2/v2/auth', token: 'https://oauth2.googleapis.com/token', redirect,
+  if (provider === 'classroom') return { clientId: process.env.GOOGLE_CLIENT_ID || GOOGLE_DESKTOP_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET, auth: 'https://accounts.google.com/o/oauth2/v2/auth', token: 'https://oauth2.googleapis.com/token', redirect,
     scope: ['openid', 'email', 'https://www.googleapis.com/auth/classroom.courses.readonly', 'https://www.googleapis.com/auth/classroom.coursework.me.readonly', 'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly'].join(' ') };
   if (provider === 'teams') {
     const tenant = process.env.MICROSOFT_TENANT_ID ?? 'organizations';
     if (!/^[a-zA-Z0-9.-]+$/.test(tenant)) throw new AppError(500, 'Microsoft 테넌트 설정을 확인해 주세요.');
-    return { clientId: process.env.MICROSOFT_CLIENT_ID, clientSecret: process.env.MICROSOFT_CLIENT_SECRET, auth: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize`, token: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`, redirect, scope: 'openid email offline_access User.Read EduAssignments.ReadBasic' };
+    return { clientId: process.env.MICROSOFT_CLIENT_ID || MICROSOFT_PUBLIC_CLIENT_ID, clientSecret: process.env.MICROSOFT_CLIENT_SECRET, auth: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize`, token: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`, redirect, scope: 'openid email offline_access User.Read EduAssignments.ReadBasic' };
   }
   if (provider === 'notion') return { clientId: process.env.NOTION_CLIENT_ID, clientSecret: process.env.NOTION_CLIENT_SECRET, auth: 'https://api.notion.com/v1/oauth/authorize', token: 'https://api.notion.com/v1/oauth/token', redirect };
   throw new AppError(404, '지원하지 않는 계정 연결입니다.');
 }
 export function authorizationUrl(provider, cfg, state, verifier) {
   const d = oauthDefinition(provider, cfg);
-  if (!d.clientId || !d.clientSecret) throw new AppError(409, '운영자가 이 서비스의 앱 등록 정보를 먼저 설정해야 합니다.', 'oauth_setup_required');
+  if (!d.clientId || (provider === 'notion' && !d.clientSecret)) throw new AppError(409, '운영자가 이 서비스의 앱 등록 정보를 먼저 설정해야 합니다.', 'oauth_setup_required');
   const u = new URL(d.auth); u.searchParams.set('client_id', d.clientId); u.searchParams.set('redirect_uri', d.redirect); u.searchParams.set('response_type', 'code'); u.searchParams.set('state', state);
   if (provider === 'notion') u.searchParams.set('owner', 'user');
   else { u.searchParams.set('scope', d.scope); u.searchParams.set('code_challenge', createHash('sha256').update(verifier).digest('base64url')); u.searchParams.set('code_challenge_method', 'S256'); }
@@ -36,7 +37,7 @@ export function authorizationUrl(provider, cfg, state, verifier) {
 export async function exchangeCode(provider, cfg, code, verifier) {
   const d = oauthDefinition(provider, cfg);
   if (provider === 'notion') return publicJson(d.token, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${Buffer.from(`${d.clientId}:${d.clientSecret}`).toString('base64')}` }, body: JSON.stringify({ grant_type: 'authorization_code', code, redirect_uri: d.redirect }) });
-  return publicJson(d.token, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: d.clientId, client_secret: d.clientSecret, code, code_verifier: verifier, redirect_uri: d.redirect, grant_type: 'authorization_code' }).toString() });
+  return publicJson(d.token, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: d.clientId, ...(d.clientSecret ? { client_secret: d.clientSecret } : {}), code, code_verifier: verifier, redirect_uri: d.redirect, grant_type: 'authorization_code' }).toString() });
 }
 export function tokenData(token, old = {}) { return { ...old, ...token, expiresAt: token.expires_in ? Date.now() + Number(token.expires_in) * 1000 : null }; }
 async function accessToken(connection, ctx) {
@@ -46,7 +47,7 @@ async function accessToken(connection, ctx) {
     const d = oauthDefinition(connection.provider, ctx.cfg);
     const response = connection.provider === 'notion'
       ? await publicJson(d.token, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${Buffer.from(`${d.clientId}:${d.clientSecret}`).toString('base64')}` }, body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: s.refresh_token }) })
-      : await publicJson(d.token, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: s.refresh_token, client_id: d.clientId, client_secret: d.clientSecret, ...(connection.provider === 'teams' ? { scope: d.scope } : {}) }).toString() });
+      : await publicJson(d.token, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: s.refresh_token, client_id: d.clientId, ...(d.clientSecret ? { client_secret: d.clientSecret } : {}), ...(connection.provider === 'teams' ? { scope: d.scope } : {}) }).toString() });
     s = tokenData(response, s); ctx.store.setSecret(connection.id, s);
   }
   if (!s.access_token) throw new AppError(424, '먼저 서비스 계정을 연결해 주세요.');
@@ -63,12 +64,13 @@ async function googlePages(path, field, token, optional = false) {
 }
 async function graphPages(path, token) {
   let url = `https://graph.microsoft.com/v1.0/${path}`, items = [];
-  for (let n = 0; n < 100; n++) { const r = await publicJson(onlyHost(url, 'graph.microsoft.com'), { headers: { Authorization: `Bearer ${token}` } }); items.push(...(r.value ?? [])); if (!r['@odata.nextLink']) return items; url = r['@odata.nextLink']; }
+  for (let n = 0; n < 100; n++) { const r = await publicJson(onlyHost(url, 'graph.microsoft.com'), { headers: { Authorization: `Bearer ${token}`, Prefer: 'include-unknown-enum-members' } }); items.push(...(r.value ?? [])); if (!r['@odata.nextLink']) return items; url = r['@odata.nextLink']; }
   throw new AppError(502, '전체 과제 페이지를 완료하지 못했습니다.');
 }
 export function googleDue(item) {
   if (!item.dueDate) return null;
-  const d = item.dueDate, t = item.dueTime ?? {};
+  if (!item.dueTime) throw new AppError(502, 'Google 과제에 마감 시각이 없어 정확한 마감일을 확인하지 못했습니다.');
+  const d = item.dueDate, t = item.dueTime;
   return new Date(Date.UTC(d.year, d.month - 1, d.day, t.hours ?? 0, t.minutes ?? 0, t.seconds ?? 0)).toISOString();
 }
 export function googleAttachments(item) {
@@ -95,7 +97,6 @@ async function pullClassroom(connection, ctx) {
 }
 async function pullTeams(connection, ctx) {
   const token = await accessToken(connection, ctx);
-  const profile = await publicJson('https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName', { headers: { Authorization: `Bearer ${token}` } });
   const assignments = await graphPages('education/me/assignments?$top=100', token), results = [];
   const classNames = new Map();
   for (const brief of assignments) {
@@ -104,13 +105,20 @@ async function pullTeams(connection, ctx) {
     const base = `education/classes/${encodeURIComponent(classId)}/assignments/${encodeURIComponent(id)}`;
     const h = { headers: { Authorization: `Bearer ${token}` } };
     const item = await publicJson(`https://graph.microsoft.com/v1.0/${base}`, h);
-    if (!classNames.has(classId)) { const c = await publicJson(`https://graph.microsoft.com/v1.0/education/classes/${encodeURIComponent(classId)}?$select=displayName`, h); classNames.set(classId, c.displayName); }
+    if (!classNames.has(classId)) {
+      // Reading the class profile requires EduRoster.ReadBasic, which is not needed for assignments.
+      // Keep the assignment sync usable when the school grants only EduAssignments.ReadBasic.
+      try { const c = await publicJson(`https://graph.microsoft.com/v1.0/education/classes/${encodeURIComponent(classId)}?$select=displayName`, h); classNames.set(classId, c.displayName || classId); }
+      catch (e) { if (e.code !== 'provider_403') throw e; classNames.set(classId, `Teams 수업 (${classId.slice(0, 8)})`); }
+    }
     const resources = await graphPages(`${base}/resources`, token);
     const submissions = await graphPages(`${base}/submissions`, token);
-    const mine = submissions.filter(s => s.recipient?.userId === profile.id || s.submittedBy?.user?.id === profile.id);
+    // With delegated student access Graph returns only submissions associated with this student,
+    // including group recipients that do not have a recipient.userId.
+    const mine = submissions;
     results.push({ externalId: id, courseId: classId, title: item.displayName, course: classNames.get(classId), description: cleanHtml(item.instructions?.content), dueAt: item.dueDateTime, kind: 'task', url: item.webUrl,
       attachments: resources.map(r => ({ name: r.resource?.displayName, url: r.resource?.fileUrl || r.resource?.link })),
-      status: mine.some(s => ['submitted', 'returned', 'reassigned'].includes(s.status) && s.status !== 'reassigned') ? 'submitted' : mine.length ? 'assigned' : 'unknown', sourceUpdatedAt: item.lastModifiedDateTime });
+      status: mine.some(s => ['submitted', 'excused'].includes(s.status)) ? 'submitted' : mine.some(s => s.status === 'working') ? 'assigned' : 'unknown', sourceUpdatedAt: item.lastModifiedDateTime });
   }
   return results;
 }

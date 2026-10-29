@@ -8,7 +8,7 @@ public final class ReminderRules {
   public static final ZoneId SCHOOL_ZONE = ZoneId.of("Asia/Seoul");
 
   public static boolean submitted(String state) {
-    return Arrays.asList("TURNED_IN", "RETURNED", "submitted", "returned", "excused")
+    return Arrays.asList("TURNED_IN", "RETURNED", "submitted", "excused")
         .contains(state);
   }
 

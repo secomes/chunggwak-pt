@@ -61,14 +61,15 @@ public final class Providers {
           long due = 0;
           if (item.has("dueDate")) {
             JSONObject d = item.getJSONObject("dueDate"), t = item.optJSONObject("dueTime");
+            if (t == null) throw new Exception("Google 과제의 정확한 마감 시각을 확인하지 못했습니다.");
             due =
                 ReminderRules.googleDue(
                     d.getInt("year"),
                     d.getInt("month"),
                     d.getInt("day"),
-                    t == null ? 23 : t.optInt("hours", 0),
-                    t == null ? 59 : t.optInt("minutes", 0),
-                    t == null ? 59 : t.optInt("seconds", 0));
+                    t.optInt("hours", 0),
+                    t.optInt("minutes", 0),
+                    t.optInt("seconds", 0));
           }
           out.put(
               base(item, cid, course.optString("name"))
@@ -111,8 +112,6 @@ public final class Providers {
   }
 
   public static JSONArray teams(String token) throws Exception {
-    JSONObject me = Http.get(GRAPH + "me?$select=id,mail,userPrincipalName", token);
-    String uid = me.getString("id");
     JSONArray list = Http.pages(GRAPH + "education/me/assignments?$top=100", "value", token, false),
         out = new JSONArray();
     Map<String, String> names = new HashMap<>();
@@ -126,9 +125,10 @@ public final class Providers {
         try {
           JSONObject course =
               Http.get(GRAPH + "education/classes/" + enc(cid) + "?$select=displayName", token);
-          names.put(cid, course.optString("displayName", "Teams 수업"));
+          names.put(cid, course.optString("displayName", "Teams 수업 (" + cid.substring(0, Math.min(8, cid.length())) + ")"));
         } catch (java.io.IOException e) {
-          names.put(cid, "Teams 수업");
+          if (!String.valueOf(e.getMessage()).contains("권한")) throw e;
+          names.put(cid, "Teams 수업 (" + cid.substring(0, Math.min(8, cid.length())) + ")");
         }
       }
       JSONArray
@@ -143,15 +143,11 @@ public final class Providers {
       String state = "unknown";
       boolean submitted = false;
       for (int n = 0; n < submissions.length(); n++) {
-        JSONObject s = submissions.getJSONObject(n),
-            r = s.optJSONObject("recipient"),
-            by = s.optJSONObject("submittedBy"),
-            user = by == null ? null : by.optJSONObject("user");
-        if ((r != null && uid.equals(r.optString("userId")))
-            || (user != null && uid.equals(user.optString("id")))) {
-          state = s.optString("status", "unknown");
-          submitted |= ReminderRules.submitted(state);
-        }
+        // Delegated student access returns only this student's associated submissions.
+        // Group submissions may not carry an individual recipient.userId.
+        JSONObject s = submissions.getJSONObject(n);
+        state = s.optString("status", "unknown");
+        submitted |= ReminderRules.submitted(state);
       }
       for (int n = 0; n < resources.length(); n++) {
         JSONObject f = resources.getJSONObject(n).optJSONObject("resource");
@@ -164,7 +160,7 @@ public final class Providers {
       JSONObject instructions = item.optJSONObject("instructions");
       String desc = instructions == null ? "" : instructions.optString("content");
       String dueText = item.optString("dueDateTime", "");
-      long due = dueText.isEmpty() ? 0 : Instant.parse(dueText).toEpochMilli();
+      long due = dueText.isEmpty() ? 0 : java.time.OffsetDateTime.parse(dueText).toInstant().toEpochMilli();
       out.put(
           new JSONObject()
               .put("externalId", id)

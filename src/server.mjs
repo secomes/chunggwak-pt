@@ -165,7 +165,7 @@ export async function createApp(overrides = {}) {
           if (email !== user.email && store.get('SELECT id FROM users WHERE email=?', email)) throw new AppError(409, '이미 사용 중인 이메일입니다.');
           store.run('UPDATE users SET name=?,email=? WHERE id=?', name, email, user.id); return json(res, 200, { user: publicUser(store.get('SELECT * FROM users WHERE id=?', user.id)) });
         }
-        if (route === '/api/catalog' && method === 'GET') return json(res, 200, { services: catalog.map(p => ({ ...p, ready: p.auth === 'oauth' ? !!(oauthDefinition(p.id, cfg).clientId && oauthDefinition(p.id, cfg).clientSecret) : true, callbackUrl: p.auth === 'oauth' ? oauthDefinition(p.id, cfg).redirect : undefined })) });
+        if (route === '/api/catalog' && method === 'GET') return json(res, 200, { services: catalog.map(p => ({ ...p, ready: p.auth === 'oauth' ? !!(oauthDefinition(p.id, cfg).clientId && (p.id !== 'notion' || oauthDefinition(p.id, cfg).clientSecret)) : true, callbackUrl: p.auth === 'oauth' ? oauthDefinition(p.id, cfg).redirect : undefined })) });
         if (route === '/api/tasks' && method === 'GET') {
           const view = url.searchParams.get('view') ?? 'active', q = (url.searchParams.get('q') ?? '').toLowerCase(), source = url.searchParams.get('source');
           const all = store.listTasks(user.id), current = new Date();
@@ -220,7 +220,7 @@ export async function createApp(overrides = {}) {
         const keyRoute = /^\/api\/keys\/([a-f0-9-]+)$/.exec(route); if (keyRoute && method === 'DELETE') { store.run('DELETE FROM api_keys WHERE id=? AND user_id=?', keyRoute[1], user.id); return json(res, 200, { ok: true }); }
         if (route === '/api/admin/oauth' && method === 'POST') {
           if (user.role !== 'owner') throw new AppError(403, '운영자만 앱 등록 정보를 설정할 수 있습니다.');
-          const b = await body(req); if (!['classroom', 'teams', 'notion'].includes(b.provider) || !text(b.clientId) || !text(b.clientSecret)) throw new AppError(400, '앱 ID와 비밀 키를 입력해 주세요.');
+          const b = await body(req); if (!['classroom', 'teams', 'notion'].includes(b.provider) || !text(b.clientId) || (b.provider === 'notion' && !text(b.clientSecret))) throw new AppError(400, '앱 등록 정보를 입력해 주세요. Notion은 비밀 키도 필요합니다.');
           if (b.tenantId && !/^[a-zA-Z0-9.-]+$/.test(b.tenantId)) throw new AppError(400, '테넌트 ID 형식을 확인해 주세요.');
           const v = { clientId: text(b.clientId, 1000), clientSecret: text(b.clientSecret, 2000), tenantId: text(b.tenantId, 100) };
           store.run('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', `oauth:${b.provider}`, encrypt(cfg.masterKey, v));

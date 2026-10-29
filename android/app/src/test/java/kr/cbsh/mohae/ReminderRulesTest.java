@@ -55,11 +55,11 @@ public class ReminderRulesTest {
 
   @Test
   public void resubmissionAndReassignmentDoNotCountAsSubmitted() {
-    for (String s : new String[] {"TURNED_IN", "RETURNED", "submitted", "returned"})
+    for (String s : new String[] {"TURNED_IN", "RETURNED", "submitted", "excused"})
       assertTrue(ReminderRules.submitted(s));
     for (String s :
         new String[] {
-          "RECLAIMED_BY_STUDENT", "REASSIGNED", "reassigned", "assigned", "UNKNOWN", "unknown"
+          "RECLAIMED_BY_STUDENT", "REASSIGNED", "reassigned", "returned", "assigned", "UNKNOWN", "unknown"
         }) assertFalse(ReminderRules.submitted(s));
   }
 

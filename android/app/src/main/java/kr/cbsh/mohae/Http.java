@@ -38,6 +38,8 @@ public final class Http {
     c.setReadTimeout(30000);
     c.setInstanceFollowRedirects(false);
     c.setRequestProperty("Accept", "application/json");
+    if (url.getHost().equals("graph.microsoft.com"))
+      c.setRequestProperty("Prefer", "include-unknown-enum-members");
     if (token != null) c.setRequestProperty("Authorization", "Bearer " + token);
     if (form != null) {
       c.setRequestMethod("POST");
