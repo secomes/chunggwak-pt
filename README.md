@@ -23,7 +23,7 @@ Android 앱은 자체 저장소, 주기적 동기화, 폰 알림을 사용합니
 - 알림 직전에 제출 상태를 다시 확인하며, 오프라인일 때에는 저장된 상태라는 안내를 표시합니다.
 - 계정 정보와 일정은 각자의 기기에 보관합니다. 배포자의 계정·토큰·일정이 APK에 포함되지 않습니다.
 
-Google/Microsoft 앱 등록은 완료됐습니다. Google의 민감한 범위 검증과 Teams 교육 과제에 대한 학교 관리자 동의는 아직 완료되지 않았습니다. [Android 구성](android/README.md)과 [배포 등록 상태](docs/ANDROID-PUBLISHING.md)를 참고하세요. 일반 사용자는 개발 콘솔을 설정하지 않습니다.
+Google/Microsoft 앱 등록은 완료됐습니다. OAuth 로그인 시험에서 Google 앱 검토 요청과 학교 Teams 교육 과제 권한의 관리자 동의 요구가 확인됐습니다. [Android 구성](android/README.md)과 [배포 등록 상태](docs/ANDROID-PUBLISHING.md)를 참고하세요. 일반 사용자는 개발 콘솔을 설정하지 않습니다.
 
 ## 개발 및 검사
 

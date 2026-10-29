@@ -2,7 +2,7 @@
 
 ## 배포자 등록 상태와 남은 외부 승인
 
-2026-10-29에 Google Classroom API, Android/Windows OAuth 클라이언트, Microsoft 다중 조직용 퍼블릭 클라이언트와 두 플랫폼의 반환 주소를 등록했습니다. 공개 client ID만 앱에 포함합니다. Google OAuth 앱은 프로덕션 단계입니다. Microsoft `EduAssignments.ReadBasic`은 등록했지만 충북과학고등학교 테넌트에서 관리자 동의를 받지 못했습니다. 학교 밖 조직은 게시자 확인 및 각 조직의 앱 승인 정책이 적용됩니다.
+2026-10-29에 Google Classroom API, Android/Windows OAuth 클라이언트, Microsoft 다중 조직용 퍼블릭 클라이언트와 두 플랫폼의 반환 주소를 등록했습니다. 공개 client ID만 앱에 포함합니다. Google OAuth 앱은 프로덕션 단계입니다. OAuth 로그인 시험에서 Google은 `access_not_configured`로 앱 검토를 요구했고, 학교 Microsoft 계정은 `AADSTS90094`로 관리자 동의 정책에 막혔습니다. Microsoft `EduAssignments.ReadBasic`은 학교 테넌트에 허용되지 않았습니다. 학교 밖 조직은 게시자 확인 및 각 조직의 앱 승인 정책이 적용됩니다.
 
 ## 배포 담당자가 준비할 항목
 
