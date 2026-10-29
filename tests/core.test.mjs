@@ -45,6 +45,7 @@ test('사용자 정의 서비스는 내부망·메타데이터·리다이렉션 
 });
 test('Google의 UTC 마감 정보와 파일 이름을 그대로 보존한다',()=>{
   assert.equal(googleDue({dueDate:{year:2026,month:10,day:28},dueTime:{hours:14,minutes:59}}),'2026-10-28T14:59:00.000Z');
+  assert.throws(() => googleDue({dueDate:{year:2026,month:10,day:28}}), /마감 시각/);
   assert.equal(googleDue({}),null);assert.equal(googleAttachments({materials:[{driveFile:{driveFile:{title:'양식.hwp',alternateLink:'https://drive.google.com/file/x'}}}]} )[0].name,'양식.hwp');
 });
 test('OAuth는 state와 PKCE를 포함하며 앱 정보 없이는 연결 성공을 가장하지 않는다',()=>{
@@ -52,6 +53,9 @@ test('OAuth는 state와 PKCE를 포함하며 앱 정보 없이는 연결 성공�
   process.env.GOOGLE_CLIENT_ID='test-client';process.env.GOOGLE_CLIENT_SECRET='test-secret';
   const u=new URL(authorizationUrl('classroom',{publicUrl:'http://127.0.0.1:4318'},'unique-state','verifier'));
   assert.equal(u.searchParams.get('state'),'unique-state');assert.equal(u.searchParams.get('code_challenge_method'),'S256');assert.ok(u.searchParams.get('code_challenge'));
-  delete process.env.GOOGLE_CLIENT_ID;assert.throws(()=>authorizationUrl('classroom',{publicUrl:'http://127.0.0.1:4318'},'s','v'),/앱 등록/);
+  delete process.env.GOOGLE_CLIENT_SECRET;
+  assert.equal(new URL(authorizationUrl('classroom',{publicUrl:'http://127.0.0.1:4318'},'another-state','verifier')).searchParams.get('client_id'),'test-client');
+  delete process.env.GOOGLE_CLIENT_ID;assert.ok(authorizationUrl('classroom',{publicUrl:'http://127.0.0.1:4318'},'s','v').includes('apps.googleusercontent.com'));
+  assert.equal(new URL(authorizationUrl('teams',{publicUrl:'http://127.0.0.1:4318'},'s','v')).searchParams.get('client_id'),'a688c8bf-762a-4ab9-9a72-cca600b34d84');
   if(old)process.env.GOOGLE_CLIENT_ID=old;else delete process.env.GOOGLE_CLIENT_ID;if(secret)process.env.GOOGLE_CLIENT_SECRET=secret;else delete process.env.GOOGLE_CLIENT_SECRET;
 });
